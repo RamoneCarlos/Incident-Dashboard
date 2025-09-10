@@ -1,38 +1,3 @@
-# Incident Management Dashboard
-
-A lightweight, responsive **Incident Management Dashboard** built with pure **HTML, CSS, and JavaScript**. 
-This tool was designed to help Engineering, SRE, and Incident Management teams collaborate during high-severity incidents by centralizing notes, attendees, and action timelines.
-
-## :rocket: Features
-:white_check_mark: Centralized *Notes Timeline (UTC)
-:white_check_mark: **Attendees management** with role selection + custom titles
-:white_check_mark: **Actions Timeline** with pending/complete status and timestamps
-:white_check_mark: **Dark/Light mode toggle** with persistence
-:white_check_mark: **Responsive design** – adapts to any screen size
-:white_check_mark: **Copy-to-Markdown export** for instant incident reports
-:white_check_mark: No backend required – just open in your browser
-## :camera_with_flash: Demo
-(Add a screenshot or GIF here once uploaded)
-## :hammer_and_wrench: How to Run
-*Download or clone this repository.
-If you just want to try it: click the green `Code` button → `Download ZIP`. 
-Unzip the file somewhere on your computer.
-*Open the dashboard.
-Find the file named: 
-     ```
-     incident_dashboard_responsive.html
-     ```
-Double-click it. It will open in your browser (Chrome, Edge, Safari, or Firefox).
-*Start using it.
-Add notes, attendees, and actions. 
-Try resizing the window → the layout will adjust automatically. 
-Use the "Copy (Markdown)" button to export incident details. 
-## :globe_with_meridians: Live Demo
-If hosted on GitHub Pages, it will be available here:  ***
-
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
