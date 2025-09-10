@@ -1,0 +1,486 @@
+# Incident Management Dashboard
+
+A lightweight, responsive **Incident Management Dashboard** built with pure **HTML, CSS, and JavaScript**. 
+This tool was designed to help Engineering, SRE, and Incident Management teams collaborate during high-severity incidents by centralizing notes, attendees, and action timelines.
+
+## :rocket: Features
+:white_check_mark: Centralized *Notes Timeline (UTC)
+:white_check_mark: **Attendees management** with role selection + custom titles
+:white_check_mark: **Actions Timeline** with pending/complete status and timestamps
+:white_check_mark: **Dark/Light mode toggle** with persistence
+:white_check_mark: **Responsive design** – adapts to any screen size
+:white_check_mark: **Copy-to-Markdown export** for instant incident reports
+:white_check_mark: No backend required – just open in your browser
+## :camera_with_flash: Demo
+(Add a screenshot or GIF here once uploaded)
+## :hammer_and_wrench: How to Run
+*Download or clone this repository.
+If you just want to try it: click the green `Code` button → `Download ZIP`. 
+Unzip the file somewhere on your computer.
+*Open the dashboard.
+Find the file named: 
+     ```
+     incident_dashboard_responsive.html
+     ```
+Double-click it. It will open in your browser (Chrome, Edge, Safari, or Firefox).
+*Start using it.
+Add notes, attendees, and actions. 
+Try resizing the window → the layout will adjust automatically. 
+Use the "Copy (Markdown)" button to export incident details. 
+## :globe_with_meridians: Live Demo
+If hosted on GitHub Pages, it will be available here:  ***
+
+
+
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Incident Dashboard — Responsive</title>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb;
+      --accent:#22c55e; --danger:#ef4444; --border:#1f2937;
+      --action-red:#2b0b0b; --action-red-border:#ef4444;
+      --action-green:#0a1f14; --action-green-border:#22c55e;
+      --headH: 180px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--text); overflow:hidden}
+    header{background:#111827; padding:12px 16px; position:sticky; top:0; border-bottom:1px solid var(--border); z-index:10}
+    h1{margin:0 0 6px; font-size:clamp(16px, 1.8vw, 20px); font-weight:700}
+    h2{margin:8px 0 6px; font-size:clamp(13px, 1.6vw, 16px)}
+    input, textarea, select{width:100%; padding:8px 10px; margin:4px 0; background:#0b1220; border:1px solid var(--border); border-radius:8px; color:#e5e7eb; outline:none}
+    textarea{resize:vertical; min-height:48px}
+    button{padding:9px 12px; border:none; border-radius:8px; cursor:pointer; font-weight:700}
+    .primary{background:var(--accent); color:#001b08}
+    .danger{background:#ef4444; color:#2a0a0a}
+    .secondary{background:#0b1220; border:1px solid var(--border); color:#e5e7eb}
+    .panel{background:var(--panel); padding:10px; border-radius:12px; border:1px solid var(--border)}
+    .muted{color:var(--muted); font-size:12px}
+    .row{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+    .grow{flex:1 1 220px}
+    .pill{padding:3px 8px; border-radius:999px; background:#0b1220; border:1px solid var(--border); font-size:12px}
+
+    /* Header responsive grid */
+    .headgrid{
+      display:grid;
+      grid-template-columns: minmax(260px, 2fr) minmax(240px, 1fr);
+      gap:16px;
+      align-items:start;
+    }
+    /* Main grid: responsive */
+    .grid{
+      display:grid;
+      grid-template-columns: minmax(260px, 2fr) minmax(240px, 1fr);
+      gap:16px; padding:12px 16px;
+      height: calc(100dvh - var(--headH));
+      align-items:start;
+    }
+    /* On tablets/phones, stack to 1 column */
+    @media (max-width: 980px){
+      .headgrid{ grid-template-columns: 1fr; }
+      .grid{ grid-template-columns: 1fr; height: calc(100dvh - var(--headH)); }
+    }
+
+    /* Panels scroll within viewport */
+    #notesPanel, #actionsPanel{max-height: calc(100dvh - var(--headH) - 16px); overflow:auto}
+
+    table{width:100%; border-collapse:collapse; margin-top:10px; display:block; overflow:auto}
+    thead, tbody, tr{display:table; width:100%}
+    thead{width:calc(100% - 1px)} /* avoid double scrollbar */
+    th,td{padding:8px 6px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; word-break:break-word}
+    th{color:#cbd5e1; font-size:12px; text-transform:uppercase; letter-spacing:.06em}
+    .details{white-space:pre; overflow:auto}
+    .wrap-on .details{white-space:pre-wrap}
+
+    /* Action rows */
+    .action-row{background:var(--action-red)}
+    .action-row td{border-bottom-color:rgba(239,68,68,.3)}
+    .action-complete{background:var(--action-green)}
+    .action-complete td{border-bottom-color:rgba(34,197,94,.3)}
+    .badge{display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); margin-right:8px; white-space:nowrap}
+    .badge-pending{border-color:var(--action-red-border); color:#fca5a5; background:rgba(239,68,68,.15)}
+    .badge-complete{border-color:var(--action-green-border); color:#86efac; background:rgba(34,197,94,.15)}
+
+    /* Toggle */
+    .toggle{position:relative; width:44px; height:26px; background:#374151; border-radius:999px; transition:background .2s, box-shadow .2s; border:1px solid #222; cursor:pointer; flex:0 0 auto}
+    .toggle::after{content:""; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#e5e7eb; transition:left .2s, box-shadow .2s, transform .12s}
+    .toggle:active::after{transform:scale(.95)}
+    .toggle.on{background:#16a34a}
+    .toggle.on::after{left:20px}
+
+    .att-scroll{max-height:190px; overflow:auto; border-top:1px dashed var(--border); margin-top:6px; padding-top:6px}
+
+    /* Light mode */
+    .light { --bg:#f7fafc; --panel:#ffffff; --muted:#6b7280; --text:#0f172a; --accent:#16a34a; --danger:#ef4444; --border:#e5e7eb; --action-red:#fff5f5; --action-green:#f0fdf4; --action-red-border:#ef4444; --action-green-border:#16a34a; }
+    .light input, .light textarea, .light select {background:#f9fafb; color:var(--text);}
+    .light .secondary{background:#f9fafb; color:var(--text);}
+    .light .pill{background:#f9fafb;}
+  </style>
+</head>
+<body>
+<header id="hdr">
+  <h1>Incident Dashboard</h1>
+
+  <div class="headgrid">
+    <!-- LEFT: Main incident controls -->
+    <div>
+      <div class="row">
+        <input id="title" class="grow" placeholder="Incident Title">
+        <input id="number" class="grow" placeholder="Incident #">
+      </div>
+      <textarea id="impact" placeholder="Impact / Description"></textarea>
+      <div class="row">
+        <button id="copy" class="primary">Copy (Markdown)</button>
+        <button id="clearAll" class="danger">Reset All</button>
+        <button id="toggleWrap" class="secondary">Enable Wrap</button>
+        <button id="themeToggle" class="secondary">Dark</button>
+        <span class="pill" style="margin-left:auto">UTC: <span id="utcClock"></span></span>
+      </div>
+      <div class="panel" style="margin-top:8px">
+        <div class="row" id="changeLever">
+          <div id="toggleChange" class="toggle" role="switch" aria-checked="false" tabindex="0"></div>
+          <div class="label" style="min-width:220px">
+            <div><strong>Change suspected as cause</strong> <span id="changeStatus" class="muted">(off)</span></div>
+            <div class="muted" style="font-size:11px">Toggle when a change is identified as causal. Add the change number. Use Undo to clear.</div>
+          </div>
+          <input id="changeNumber" class="grow" placeholder="Change # (e.g., CHG004321)" disabled>
+          <button id="clearChange" class="secondary">Undo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Attendees (stays in header) -->
+    <div class="panel">
+      <h2>Attendees</h2>
+      <div class="row" style="gap:12px">
+        <input id="attendeeName" class="grow" placeholder="Name">
+        <button class="primary" id="addAttendeeBtn">Add Attendee</button>
+      </div>
+      <label class="muted">Select Title</label>
+      <div class="row" style="gap:12px; align-items:center">
+        <select id="attendeeRoleSelect" class="grow"></select>
+        <button id="removeTitle" class="danger">Remove</button>
+      </div>
+      <label class="muted">Add Custom Title</label>
+      <div class="row" style="gap:12px">
+        <input id="customTitleInput" class="grow" placeholder="e.g., Microsoft Vendor TAM">
+        <button id="addCustomTitle" class="primary">Add Title</button>
+      </div>
+      <div class="muted" style="margin-top:4px">Type a title, click <b>Add Title</b>, select it, then click <b>Add Attendee</b>.</div>
+      <div class="att-scroll" style="margin-top:6px">
+        <div id="attendeeList"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN: Notes (left) + Actions (right) -->
+<main class="grid">
+  <!-- Notes Timeline -->
+  <section class="panel" id="notesPanel">
+    <h2>Notes Timeline (UTC)</h2>
+    <div class="row">
+      <textarea id="timelineInput" class="grow" placeholder="Add note… (Enter to add; Shift+Enter for list)"></textarea>
+      <button class="primary" id="addEntryBtn">Add Note</button>
+    </div>
+    <table>
+      <thead><tr><th>Timestamp</th><th>Details</th><th>Actions</th></tr></thead>
+      <tbody id="timelineBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Actions Timeline -->
+  <section class="panel" id="actionsPanel">
+    <h2>Actions Timeline (UTC)</h2>
+    <div class="row">
+      <textarea id="actionInput" class="grow" placeholder="Action taken… (Enter to add; Shift+Enter for list)"></textarea>
+      <button class="secondary" id="addActionBtn">Add Action</button>
+    </div>
+    <table>
+      <thead><tr><th>Start (UTC)</th><th>Action Details</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="actionBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+/* === Helpers === */
+const $ = s => document.querySelector(s);
+const esc = s => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const utc = d => { const s = new Date(d||Date.now()).toISOString(); return s.slice(0,19).replace('T',' ') + ' UTC'; };
+
+/* === State === */
+const state = {
+  wrap:false,
+  changeActive:false,
+  changeNumber:'',
+  notes:[],
+  actions:[],
+  attendees:[],
+  titles:[ 'Incident Commander','DOC Commander','SME','SME 2','Vendor','Comms','SRE','Network','DBA','Security/IR','On-Call','Observer' ]
+};
+
+/* === Render === */
+function render(){
+  document.body.classList.toggle('wrap-on', state.wrap);
+
+  // change lever
+  $('#toggleChange').classList.toggle('on', state.changeActive);
+  $('#toggleChange').setAttribute('aria-checked', state.changeActive?'true':'false');
+  $('#changeStatus').textContent = state.changeActive ? '(on)' : '(off)';
+  $('#changeNumber').disabled = !state.changeActive;
+  $('#changeNumber').value = state.changeNumber || '';
+
+  // titles dropdown
+  const sel = $('#attendeeRoleSelect');
+  sel.innerHTML = '<option value="">(none)</option>' + state.titles.map(t=>`<option>${esc(t)}</option>`).join('');
+
+  // notes
+  const tb = $('#timelineBody'); tb.innerHTML = '';
+  for (let n of [...state.notes].reverse()){
+    tb.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${esc(n.ts)}</td>
+        <td><div class="details">${esc(n.text)}</div></td>
+        <td><button class="danger" onclick="delNote('${n.ts.replace(/[^0-9]/g,'')}')">Delete</button></td>
+      </tr>`);
+  }
+
+  // actions
+  const ab = $('#actionBody'); ab.innerHTML='';
+  for (let i=state.actions.length-1;i>=0;i--){
+    const a = state.actions[i];
+    const cls = a.completed ? 'action-complete' : 'action-row';
+    const status = a.completed ? `<span class="badge badge-complete">Complete</span> <small>${esc(a.done)} (${a.mins} min)</small>`
+                               : `<span class="badge badge-pending">Pending</span>`;
+    ab.insertAdjacentHTML('beforeend', `
+      <tr class="${cls}">
+        <td>${esc(a.start)}</td>
+        <td><div class="details">${esc(a.text)}</div></td>
+        <td>${status}<br>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+              <div class="toggle ${a.completed?'on':''}" onclick="toggleAction(${i})"
+                   role="switch" aria-checked="${a.completed?'true':'false'}"
+                   title="${a.completed ? `Completed at ${esc(a.done)}` : 'Mark complete'}"></div>
+              <span class="muted">Complete</span>
+            </div>
+        </td>
+        <td><button class="danger" onclick="delAction(${i})">Delete</button></td>
+      </tr>`);
+  }
+
+  // attendees
+  const box = $('#attendeeList'); box.innerHTML='';
+  for (let i=state.attendees.length-1;i>=0;i--){
+    const at = state.attendees[i];
+    box.insertAdjacentHTML('beforeend', `
+      <div class="row" style="border-bottom:1px dashed var(--border);padding:6px 0; align-items:flex-start">
+        <div class="grow">
+          <div>${esc(at.name)} <span class="muted">— ${esc(at.role||'')}</span></div>
+          <div class="muted" style="font-size:11px">Added ${esc(at.ts||'')}</div>
+        </div>
+        <button class="danger" onclick="delAttendee(${i})">Remove</button>
+      </div>`);
+  }
+}
+
+/* === Notes === */
+function addNoteFromInput(){
+  const v = $('#timelineInput').value;
+  if (!v.trim()) return;
+  state.notes.push({ ts: utc(), text: v });
+  $('#timelineInput').value='';
+  render();
+}
+$('#addEntryBtn').onclick = addNoteFromInput;
+$('#timelineInput').addEventListener('keydown', e=>{
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); addNoteFromInput(); }
+});
+function delNote(keyTs){
+  state.notes = state.notes.filter(n => n.ts.replace(/[^0-9]/g,'') !== keyTs);
+  render();
+}
+
+/* === Actions === */
+function addActionFromInput(){
+  const v = $('#actionInput').value;
+  if (!v.trim()) return;
+  state.actions.push({ start: utc(), text: v, completed:false, done:'', mins:0 });
+  $('#actionInput').value='';
+  render();
+}
+$('#addActionBtn').onclick = addActionFromInput;
+$('#actionInput').addEventListener('keydown', e=>{
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); addActionFromInput(); }
+});
+function toggleComplete(idx, val){
+  const a = state.actions[idx]; if (!a) return;
+  if (val){
+    a.completed = true;
+    a.done = utc();
+    const start = Date.parse(a.start.replace(' UTC','Z'));
+    const end = Date.now();
+    a.mins = Math.max(0, Math.round((end - start)/60000));
+  }else{
+    a.completed = false;
+    a.done = '';
+    a.mins = 0;
+  }
+  render();
+}
+function toggleAction(idx){
+  const a = state.actions[idx]; if (!a) return;
+  toggleComplete(idx, !a.completed);
+}
+function delAction(idx){
+  state.actions.splice(idx,1);
+  render();
+}
+
+/* === Attendees & Titles === */
+$('#addCustomTitle').onclick = ()=>{
+  const t = $('#customTitleInput').value.trim();
+  if (!t) return;
+  if (!state.titles.includes(t)) state.titles.push(t);
+  $('#customTitleInput').value='';
+  render();
+};
+$('#removeTitle').onclick = ()=>{
+  const t = $('#attendeeRoleSelect').value;
+  if (!t) return;
+  state.titles = state.titles.filter(x => x !== t);
+  render();
+};
+function addAttendee(){
+  const name = $('#attendeeName').value.trim();
+  const role = $('#attendeeRoleSelect').value || '';
+  if (!name) return;
+  state.attendees.push({ name, role, ts: utc() });
+  $('#attendeeName').value='';
+  render();
+}
+$('#addAttendeeBtn').onclick = addAttendee;
+function delAttendee(idx){
+  state.attendees.splice(idx,1);
+  render();
+}
+
+/* === Change lever === */
+$('#toggleChange').addEventListener('click', ()=>{
+  state.changeActive = !state.changeActive;
+  if (!state.changeActive){ state.changeNumber=''; }
+  render();
+});
+$('#changeNumber').addEventListener('input', e=>{
+  state.changeNumber = e.target.value;
+});
+$('#clearChange').onclick = ()=>{
+  state.changeActive = false;
+  state.changeNumber = '';
+  render();
+};
+
+/* === Wrap toggle === */
+$('#toggleWrap').onclick = ()=>{
+  state.wrap = !state.wrap;
+  $('#toggleWrap').textContent = state.wrap ? 'Disable Wrap' : 'Enable Wrap';
+  render();
+};
+
+/* === Copy Markdown === */
+$('#copy').onclick = ()=>{
+  const md = buildMarkdown();
+  navigator.clipboard.writeText(md).then(()=>{
+    $('#copy').textContent = 'Copied';
+    setTimeout(()=>$('#copy').textContent='Copy (Markdown)', 1200);
+  });
+};
+function buildMarkdown(){
+  const title = document.getElementById('title').value || 'Incident';
+  const number = document.getElementById('number').value || '-';
+  const impact = document.getElementById('impact').value || '-';
+  const lines = [];
+  lines.push(`# ${title}`);
+  lines.push(`**Number:** ${number}`);
+  lines.push('');
+  lines.push('## Impact / Description');
+  lines.push(impact);
+  lines.push('');
+  lines.push('## Notes (UTC)');
+  for (const n of state.notes){ lines.push(`- ${n.ts} — ${n.text}`); }
+  lines.push('');
+  lines.push('## Actions (UTC)');
+  for (const a of state.actions){
+    const s = a.completed ? `✅ ${a.start} — ${a.text} (done ${a.done}, ${a.mins} min)`
+                          : `🟥 ${a.start} — ${a.text}`;
+    lines.push(`- ${s}`);
+  }
+  lines.push('');
+  lines.push('## Attendees');
+  for (const at of state.attendees){ lines.push(`- ${at.name} — ${at.role||''} (added ${at.ts||''})`); }
+  return lines.join('\\n');
+}
+
+/* === Reset === */
+$('#clearAll').onclick = ()=>{
+  if (!confirm('Clear everything on this page?')) return;
+  state.wrap = false;
+  state.changeActive = false;
+  state.changeNumber = '';
+  state.notes = [];
+  state.actions = [];
+  state.attendees = [];
+  state.titles = [ 'Incident Commander','DOC Commander','SME','SME 2','Vendor','Comms','SRE','Network','DBA','Security/IR','On-Call','Observer' ];
+  document.getElementById('title').value = '';
+  document.getElementById('number').value = '';
+  document.getElementById('impact').value = '';
+  document.getElementById('timelineInput').value = '';
+  document.getElementById('actionInput').value = '';
+  document.getElementById('attendeeName').value = '';
+  document.getElementById('customTitleInput').value = '';
+  document.getElementById('changeNumber').value = '';
+  render();
+  const btn = document.getElementById('clearAll');
+  const prev = btn.textContent; btn.textContent = 'Cleared'; setTimeout(()=>btn.textContent = prev, 1200);
+};
+
+/* --- Header height var for sticky layout --- */
+function setHeadH(){
+  const h = document.getElementById('hdr').offsetHeight;
+  document.documentElement.style.setProperty('--headH', (h) + 'px');
+}
+window.addEventListener('load', setHeadH);
+window.addEventListener('resize', setHeadH);
+
+/* --- Theme toggle --- */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(mode){
+  if (mode === 'light'){
+    document.body.classList.add('light');
+    themeBtn.textContent = 'Light';
+  } else {
+    document.body.classList.remove('light');
+    themeBtn.textContent = 'Dark';
+  }
+  localStorage.setItem('im_theme', mode);
+}
+themeBtn.addEventListener('click', ()=>{
+  const now = document.body.classList.contains('light') ? 'dark' : 'light';
+  applyTheme(now);
+});
+applyTheme(localStorage.getItem('im_theme') || 'dark');
+
+/* === Live UTC clock === */
+function tick(){ document.getElementById('utcClock').textContent = utc(); }
+setInterval(tick, 1000); tick();
+
+// Initial render
+render();
+</script>
+</body>
+</html>
