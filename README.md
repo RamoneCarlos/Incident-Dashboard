@@ -20,9 +20,9 @@ Unzip the file somewhere on your computer.
 
 * Open the dashboard.
 Find the file named: 
-     ```
+     
      index.html
-     ```
+     
 Double-click it. It will open in your browser (Chrome, Edge, Safari, or Firefox).
 *Start using it.
 Add notes, attendees, and actions. 
